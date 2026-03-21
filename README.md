@@ -3,6 +3,8 @@
 A curated collection of **mini machine learning projects and experiments** built using Python and popular ML libraries.
 This repository focuses on implementing core machine learning concepts through small, practical projects covering data preprocessing, feature engineering, model training, and evaluation.
 
+---
+
 ## Purpose
 
 The goal of this repository is to:
@@ -12,26 +14,62 @@ The goal of this repository is to:
 * Experiment with different ML algorithms and techniques
 * Maintain a structured portfolio of learning projects
 
+---
+
 ## Current Projects
 
-At present, this repository contains the following machine learning projects:
+### 🔹 CPU Usage Prediction (ModelForge Kaggle Competition)
 
-* **CPU Usage Prediction** (ModelForge Kaggle Competition)
-* **Binary Image Classification using CNN** (Cats vs Dogs dataset)
+A regression-based project focused on predicting CPU usage using structured data.
 
-More mini ML projects and experiments will be added over time as part of my learning and practice.
+**Tech Used:**
+
+* Python
+* Pandas, NumPy
+* Scikit-learn
+* XGBoost / LightGBM / CatBoost
+
+---
+
+### 🔹 Binary Image Classification (Cats vs Dogs)
+
+A deep learning project that classifies images of cats and dogs using Convolutional Neural Networks (CNN).
+
+**Tech Used:**
+
+* Python
+* PyTorch
+* Torchvision
+* NumPy
+* OpenCV
+
+---
 
 ## Tech Stack
 
+**General:**
+
 * Python
-* Pandas
 * NumPy
+* Pandas
+
+**Machine Learning:**
+
 * Scikit-learn
-* TensorFlow / Keras
 * XGBoost
 * LightGBM
 * CatBoost
+
+**Deep Learning:**
+
+* PyTorch
+* Torchvision
+
+**Computer Vision:**
+
 * OpenCV
+
+---
 
 ## Repository Structure
 
@@ -43,6 +81,16 @@ ml-micro-projects
 │   └── binary-image-classification
 ```
 
+---
+
+## Future Work
+
+* Add more ML mini projects across domains
+* Improve model performance with hyperparameter tuning
+* Add detailed project-level documentation
+
+---
+
 ## Author
 
-Ayush Kumar Agarwal
+**Ayush Kumar Agarwal**
