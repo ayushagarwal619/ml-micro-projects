@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#ec4899',
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b',
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom CSS -->
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-button {
+            position: relative;
+        }
+        .neon-button::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 9999px;
+            background: linear-gradient(45deg, #6366f1, #ec4899);
+            z-index: -1;
+            transition: opacity 0.3s ease;
+            filter: blur(8px);
+            opacity: 0;
+        }
+        .neon-button:hover::before {
+            opacity: 1;
+        }
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s step-start infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        /* Gradient Background */
+        body {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient-x 15s ease infinite;
+        }
+        body.dark {
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #020617);
+            background-size: 400% 400%;
+            animation: gradient-x 15s ease infinite;
+        }
+        
+        .highlight {
+            background-color: rgba(99, 102, 241, 0.2);
+            font-weight: 600;
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+        .dark .highlight {
+            background-color: rgba(236, 72, 153, 0.3);
+            color: #f9a8d4;
+        }
+        
+        textarea {
+            resize: none;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 dark:text-gray-100 transition-colors duration-500 font-sans p-4 sm:p-8">
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto flex justify-between items-center mb-10 mt-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
+                AI
+            </div>
+            <div>
+                <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Summarizer Pro</h1>
+            </div>
+        </div>
+        <button id="theme-toggle" class="p-3 rounded-full glass hover:bg-white/20 dark:hover:bg-black/20 transition-all active:scale-95">
+            <svg id="theme-icon-light" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <svg id="theme-icon-dark" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+    </header>
+
+    <!-- Main Container Layout -->
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+        <!-- Input Side -->
+        <section class="glass p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col gap-5 transition-all">
+            <div class="flex justify-between items-end">
+                <label class="text-sm font-bold tracking-wide uppercase opacity-70 mb-1 block">Input Text</label>
+                <div class="flex gap-2">
+                    <button id="btn-example" class="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-medium">Auto-fill Example</button>
+                    <button id="btn-clear" class="text-xs px-3 py-1 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors font-medium">Clear</button>
+                </div>
+            </div>
+            
+            <div class="relative group">
+                <textarea id="dialogue-input" class="w-full min-h-[250px] p-5 rounded-2xl bg-white/50 dark:bg-black/30 border-2 border-transparent focus:border-primary/50 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium leading-relaxed" placeholder="Type or paste your content here... (minimum 50 words recommended)"></textarea>
+                <div class="absolute bottom-4 right-4 text-xs font-semibold opacity-50 bg-black/5 dark:bg-white/10 px-3 py-1 rounded-full pointer-events-none transition-opacity group-focus-within:opacity-100">
+                    <span id="char-count">0</span> chars • <span id="word-count">0</span> words
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+                <!-- Length Toggle -->
+                <div class="flex items-center gap-2 bg-white/40 dark:bg-black/30 p-1.5 rounded-full w-full sm:w-auto">
+                    <button class="length-btn active flex-1 sm:flex-none px-4 py-1.5 rounded-full text-sm font-semibold transition-all shadow-sm bg-white dark:bg-slate-700 text-primary" data-length="short">Short</button>
+                    <button class="length-btn flex-1 sm:flex-none px-4 py-1.5 rounded-full text-sm font-medium transition-all hover:bg-white/50 dark:hover:bg-slate-700/50 opacity-70" data-length="medium">Medium</button>
+                    <button class="length-btn flex-1 sm:flex-none px-4 py-1.5 rounded-full text-sm font-medium transition-all hover:bg-white/50 dark:hover:bg-slate-700/50 opacity-70" data-length="long">Long</button>
+                </div>
+                
+                <button id="btn-summarize" class="neon-button w-full sm:w-auto px-8 py-3 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-bold tracking-wide shadow-lg hover:-translate-y-1 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2">
+                    <span>Summarize Text</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Output Side -->
+        <section class="glass p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col gap-5 relative overflow-hidden transition-all">
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-20 hidden flex-col items-center justify-center rounded-3xl">
+                <div class="relative w-20 h-20 mb-4">
+                    <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
+                </div>
+                <h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary animate-pulse">Generating Summary...</h3>
+                <p class="text-sm opacity-60 mt-2">Neural network analyzing contextual depth</p>
+            </div>
+
+            <div class="flex justify-between items-end mb-1">
+                <label class="text-sm font-bold tracking-wide uppercase opacity-70 block">AI Summary</label>
+                <div class="flex items-center gap-3">
+                    <span id="reduction-badge" class="hidden text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-bold border border-green-500/30">
+                        75% Reduced
+                    </span>
+                    <button id="btn-copy" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors hidden group relative" title="Copy to clipboard">
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <span id="copy-tooltip" class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity whitespace-nowrap pointer-events-none">Copied!</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-white/50 dark:bg-black/30 rounded-2xl p-6 border-2 border-transparent relative group">
+                <div id="empty-state" class="h-full flex flex-col items-center justify-center opacity-40 text-center gap-4 py-10">
+                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p class="font-medium">Output will magically appear here</p>
+                </div>
+                
+                <div id="summary-content" class="text-lg leading-relaxed hidden"></div>
+            </div>
+            
+            <!-- Side By Side Comparison toggler (Optional extra wow factor) -->
+            <button id="view-original-toggle" class="hidden mt-2 text-sm self-center font-bold text-primary hover:underline underline-offset-4 decoration-2 transition-all">View Side-by-Side Comparison</button>
+        </section>
+    </main>
+
+    <!-- Side-by-side Modal -->
+    <div id="comparison-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-5xl rounded-3xl shadow-2xl flex flex-col overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-content">
+            <div class="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                <h3 class="font-bold text-lg">Text Analysis Comparison</h3>
+                <button id="close-modal" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x dark:divide-slate-800">
+                <div class="p-6">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 block">Original Text</span>
+                    <p id="modal-original" class="text-sm opacity-80 h-[400px] overflow-y-auto pr-2 custom-scrollbar"></p>
+                </div>
+                <div class="p-6 bg-primary/5 dark:bg-primary/10">
+                    <span class="text-xs font-bold uppercase tracking-wider text-primary mb-3 block">Condensed Summary</span>
+                    <p id="modal-summary" class="text-md font-medium h-[400px] overflow-y-auto pr-2 custom-scrollbar"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script area -->
+    <script>
+        // Setup Theme
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // Default to dark mode for hackathon cool factor
+        html.classList.add('dark');
+        document.getElementById('theme-icon-light').classList.remove('hidden');
+        document.getElementById('theme-icon-dark').classList.add('hidden');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            document.getElementById('theme-icon-light').classList.toggle('hidden', !isDark);
+            document.getElementById('theme-icon-dark').classList.toggle('hidden', isDark);
+        });
+
+        // Elements
+        const dialogueInput = document.getElementById('dialogue-input');
+        const charCount = document.getElementById('char-count');
+        const wordCount = document.getElementById('word-count');
+        const btnExample = document.getElementById('btn-example');
+        const btnClear = document.getElementById('btn-clear');
+        const lengthBtns = document.querySelectorAll('.length-btn');
+        const btnSummarize = document.getElementById('btn-summarize');
+        
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const emptyState = document.getElementById('empty-state');
+        const summaryContent = document.getElementById('summary-content');
+        const btnCopy = document.getElementById('btn-copy');
+        const copyTooltip = document.getElementById('copy-tooltip');
+        const reductionBadge = document.getElementById('reduction-badge');
+        const viewOriginalToggle = document.getElementById('view-original-toggle');
+        
+        const comparisonModal = document.getElementById('comparison-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeModal = document.getElementById('close-modal');
+        const modalOriginal = document.getElementById('modal-original');
+        const modalSummary = document.getElementById('modal-summary');
+
+        let selectedLength = 'short';
+        let originalWordCount = 0;
+        let generatedSummaryText = '';
+
+        // Auto-resize textarea
+        dialogueInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            
+            // Updates counts
+            const text = this.value;
+            charCount.textContent = text.length;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            wordCount.textContent = words;
+            
+            originalWordCount = words;
+            
+            // Disable if empty
+            btnSummarize.disabled = words === 0;
+        });
+
+        // Set initial stats
+        dialogueInput.dispatchEvent(new Event('input'));
+
+        // Example text
+        btnExample.addEventListener('click', () => {
+            dialogueInput.value = "Artificial intelligence (AI) is intelligence demonstrated by machines, as opposed to the natural intelligence displayed by animals including humans. AI research has been defined as the field of study of intelligent agents, which refers to any system that perceives its environment and takes actions that maximize its chance of achieving its goals. The term \"artificial intelligence\" had previously been used to describe machines that mimic and display \"human\" cognitive skills that are associated with the human mind, such as \"learning\" and \"problem-solving\". This definition has since been rejected by major AI researchers who now describe AI in terms of rationality and acting rationally, which does not limit how intelligence can be articulated. AI applications include advanced web search engines (e.g., Google Search), recommendation systems (used by YouTube, Amazon, and Netflix), understanding human speech (such as Siri and Alexa), self-driving cars (e.g., Waymo), generative or creative tools (ChatGPT and AI art), automated decision-making, and competing at the highest level in strategic game systems (such as chess and Go).";
+            dialogueInput.dispatchEvent(new Event('input'));
+        });
+
+        // Clear text
+        btnClear.addEventListener('click', () => {
+            dialogueInput.value = '';
+            dialogueInput.dispatchEvent(new Event('input'));
+            dialogueInput.style.height = '250px';
+            resetOutput();
+        });
+
+        // Length toggles
+        lengthBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                lengthBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-white', 'dark:bg-slate-700', 'text-primary', 'shadow-sm');
+                    b.classList.add('opacity-70');
+                });
+                btn.classList.add('active', 'bg-white', 'dark:bg-slate-700', 'text-primary', 'shadow-sm');
+                btn.classList.remove('opacity-70');
+                selectedLength = btn.dataset.length;
+            });
+        });
+
+        const resetOutput = () => {
+            emptyState.classList.remove('hidden');
+            summaryContent.classList.add('hidden');
+            btnCopy.classList.add('hidden');
+            reductionBadge.classList.add('hidden');
+            viewOriginalToggle.classList.add('hidden');
+            summaryContent.innerHTML = '';
+        }
+
+        const typeWriter = async (text, element, speed = 15) => {
+            element.innerHTML = '<span class="typing-cursor"></span>';
+            const cursor = element.querySelector('.typing-cursor');
+            let i = 0;
+            
+            return new Promise(resolve => {
+                const interval = setInterval(() => {
+                    if (i < text.length) {
+                        const char = text.charAt(i);
+                        const span = document.createElement('span');
+                        span.textContent = char;
+                        element.insertBefore(span, cursor);
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                        cursor.remove();
+                        highlightKeywords(element); // post process
+                        resolve();
+                    }
+                }, speed);
+            });
+        };
+
+        const highlightKeywords = (element) => {
+            const html = element.innerHTML;
+            const words = html.split(' ');
+            const processed = words.map(w => {
+                 const clean = w.replace(/[.,]/g, '');
+                 if ((clean.length > 5 && /^[A-Z]/.test(clean)) || (clean.length > 3 && clean === clean.toUpperCase() && /[A-Z]/.test(clean))) {
+                      return `<span class="highlight">${w}</span>`;
+                 }
+                 return w;
+            });
+            element.innerHTML = processed.join(' ');
+        };
+
+        // Form Submission
+        btnSummarize.addEventListener('click', async () => {
+            const dialogue = dialogueInput.value.trim();
+            if (!dialogue) return;
+
+            // UI Loading State
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+            btnSummarize.disabled = true;
+            resetOutput();
+
+            try {
+                const response = await fetch("/summarize/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ dialogue, length: selectedLength }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                generatedSummaryText = data.summary || "No summary returned.";
+
+                // UI Success State
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                
+                emptyState.classList.add('hidden');
+                summaryContent.classList.remove('hidden');
+                
+                // Calculate reduction
+                const summaryWords = generatedSummaryText.trim() ? generatedSummaryText.trim().split(/\s+/).length : 0;
+                const reduction = Math.max(0, Math.round(((originalWordCount - summaryWords) / originalWordCount) * 100));
+                
+                reductionBadge.textContent = `${reduction}% Reduced`;
+                reductionBadge.classList.remove('hidden');
+                
+                // Animate typing
+                await typeWriter(generatedSummaryText, summaryContent, 20);
+                
+                // Show tools
+                btnCopy.classList.remove('hidden');
+                viewOriginalToggle.classList.remove('hidden');
+                
+            } catch (err) {
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                emptyState.classList.add('hidden');
+                summaryContent.classList.remove('hidden');
+                summaryContent.innerHTML = `<span class="text-red-500 font-bold">Error:</span> ${err.message}`;
+            } finally {
+                btnSummarize.disabled = false;
+            }
+        });
+
+        // Copy to clipboard
+        btnCopy.addEventListener('click', () => {
+            navigator.clipboard.writeText(generatedSummaryText).then(() => {
+                copyTooltip.classList.remove('opacity-0');
+                copyTooltip.classList.add('opacity-100');
+                setTimeout(() => {
+                    copyTooltip.classList.remove('opacity-100');
+                    copyTooltip.classList.add('opacity-0');
+                }, 2000);
+            });
+        });
+
+        // Modal interactions
+        viewOriginalToggle.addEventListener('click', () => {
+            modalOriginal.textContent = dialogueInput.value;
+            modalSummary.textContent = generatedSummaryText;
+            highlightKeywords(modalSummary);
+            
+            comparisonModal.classList.remove('hidden');
+            comparisonModal.classList.add('flex');
+            
+            // Slight delay for animation
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        });
+
+        closeModal.addEventListener('click', () => {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                comparisonModal.classList.add('hidden');
+                comparisonModal.classList.remove('flex');
+            }, 300);
+        });
+
+        // Close modal on outside click
+        comparisonModal.addEventListener('click', (e) => {
+            if (e.target === comparisonModal) {
+                closeModal.click();
+            }
+        });
+        
+        // CSS for custom scrollbar embedded for neat modal
+        const style = document.createElement('style');
+        style.textContent = `
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
